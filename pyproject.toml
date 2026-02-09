@@ -3,7 +3,7 @@ name = "gemini-api"
 description = "A custom node for ComfyUI to integrate Google Gemini API."
 version = "1.0.7"
 license = {file = "LICENSE"}
-dependencies = ["google-genai>=1.5.0", "Pillow>=10.1.0", "requests", "numpy", "torch"]
+dependencies = ["Pillow>=10.1.0", "requests", "numpy", "torch"]
 
 [project.urls]
 Repository = "https://github.com/CY-CHENYUE/ComfyUI-Gemini-API"

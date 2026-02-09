@@ -1,4 +1,4 @@
-# ComfyUI Gemini API
+# ComfyUI-WaaS-API
 
 [中文](README.md) | English
 
