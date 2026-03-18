@@ -10,7 +10,7 @@ from io import BytesIO
 import traceback
 
 
-class GeminiImageGenerator:
+class ImageGeneratorImg2img:
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -38,9 +38,18 @@ class GeminiImageGenerator:
                     {"default": "Free (自由比例)"},
                 ),
                 "image_size": (["1K", "2K"], {"default": "1K"}),
+                "image1": ("IMAGE",),
             },
             "optional": {
-                "images": ("IMAGE",),
+                "image2": ("IMAGE",),
+                "image3": ("IMAGE",),
+                "image4": ("IMAGE",),
+                "image5": ("IMAGE",),
+                "image6": ("IMAGE",),
+                "image7": ("IMAGE",),
+                "image8": ("IMAGE",),
+                "image9": ("IMAGE",),
+                "image10": ("IMAGE",),
             },
         }
 
@@ -177,7 +186,16 @@ class GeminiImageGenerator:
         model,
         aspect_ratio,
         image_size,
-        images=None,
+        image1,
+        image2=None,
+        image3=None,
+        image4=None,
+        image5=None,
+        image6=None,
+        image7=None,
+        image8=None,
+        image9=None,
+        image10=None,
     ):
         """生成图像 - 支持多张参考图片"""
         response_text = ""
@@ -213,48 +231,52 @@ class GeminiImageGenerator:
             parts = []
             reference_images_count = 0
 
+            # 收集所有图像（image1 到 image10）
+            all_images = [image1, image2, image3, image4, image5, image6, image7, image8, image9, image10]
+
             # 处理参考图像(单张或多张) - 转换为内联数据格式
-            if images is not None:
-                try:
-                    # 确定图像数量
-                    batch_size = images.shape[0]
-                    self.log(f"检测到 {batch_size} 张参考图像")
+            for idx, images in enumerate(all_images, 1):
+                if images is not None:
+                    try:
+                        # 确定图像数量
+                        batch_size = images.shape[0]
+                        self.log(f"检测到 image{idx} 有 {batch_size} 张图像")
 
-                    # 逐一处理每张图像
-                    for i in range(batch_size):
-                        # 获取单张图像
-                        input_image = images[i].cpu().numpy()
+                        # 逐一处理每张图像
+                        for i in range(batch_size):
+                            # 获取单张图像
+                            input_image = images[i].cpu().numpy()
 
-                        # 转换为PIL图像
-                        input_image = (input_image * 255).astype(np.uint8)
-                        pil_image = Image.fromarray(input_image)
+                            # 转换为PIL图像
+                            input_image = (input_image * 255).astype(np.uint8)
+                            pil_image = Image.fromarray(input_image)
 
-                        self.log(
-                            f"参考图像 {i + 1} 处理成功，尺寸: {pil_image.width}x{pil_image.height}"
-                        )
+                            self.log(
+                                f"参考图像 image{idx}[{i + 1}] 处理成功，尺寸: {pil_image.width}x{pil_image.height}"
+                            )
 
-                        # 转换为base64
-                        img_byte_arr = BytesIO()
-                        pil_image.save(img_byte_arr, format="PNG")
-                        img_byte_arr.seek(0)
-                        image_base64 = base64.b64encode(img_byte_arr.read()).decode(
-                            "utf-8"
-                        )
+                            # 转换为base64
+                            img_byte_arr = BytesIO()
+                            pil_image.save(img_byte_arr, format="PNG")
+                            img_byte_arr.seek(0)
+                            image_base64 = base64.b64encode(img_byte_arr.read()).decode(
+                                "utf-8"
+                            )
 
-                        # 添加图像到 parts（Gemini 格式）
-                        parts.append(
-                            {
-                                "inlineData": {
-                                    "mimeType": "image/png",
-                                    "data": image_base64,
+                            # 添加图像到 parts（Gemini 格式）
+                            parts.append(
+                                {
+                                    "inlineData": {
+                                        "mimeType": "image/png",
+                                        "data": image_base64,
+                                    }
                                 }
-                            }
-                        )
-                        reference_images_count += 1
+                            )
+                            reference_images_count += 1
 
-                    self.log(f"成功添加 {reference_images_count} 张参考图像到请求中")
-                except Exception as img_error:
-                    self.log(f"参考图像处理错误: {str(img_error)}")
+                        self.log(f"成功添加 image{idx} 的图像到请求中")
+                    except Exception as img_error:
+                        self.log(f"image{idx} 处理错误: {str(img_error)}")
 
             # 添加文本提示
             parts.append({"text": prompt})
@@ -311,7 +333,7 @@ class GeminiImageGenerator:
             # 检查响应状态
             if response.status_code != 200:
                 error_msg = f"API请求失败，状态码: {response.status_code}, 响应: {response.text}"
-                self.log(error_msg)
+                print(error_msg)
                 full_text = (
                     "## 处理日志\n"
                     + "\n".join(self.log_messages)
@@ -324,7 +346,7 @@ class GeminiImageGenerator:
             response_data = response.json()
 
             # 响应处理
-            self.log("API响应接收成功，正在处理...")
+            print("API响应接收成功，正在处理...")
 
             # 检查响应格式（Gemini API 格式）
             if (
@@ -442,7 +464,3 @@ class GeminiImageGenerator:
             return (self.generate_empty_image(512, 512), full_text)
 
 
-# 注册节点
-NODE_CLASS_MAPPINGS = {"云扉AiGate": GeminiImageGenerator}
-
-NODE_DISPLAY_NAME_MAPPINGS = {"云扉AiGate": "全能图片-图生图"}
