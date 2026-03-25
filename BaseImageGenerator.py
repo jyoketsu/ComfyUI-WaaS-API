@@ -52,6 +52,29 @@ class BaseImageGenerator:
             self.log_messages.append(message)
         return message
 
+    def validate_image_size(self, img_byte_arr, max_size_mb=4):
+        """
+        验证图像大小是否超过限制
+
+        Args:
+            img_byte_arr: BytesIO对象，包含图像数据
+            max_size_mb: 最大大小限制（MB），默认4MB
+
+        Returns:
+            (bool, str): (通过验证, 消息)
+        """
+        # 获取字节大小
+        img_bytes = img_byte_arr.getvalue()
+        size_bytes = len(img_bytes)
+        size_mb = size_bytes / (1024 * 1024)
+        max_size_bytes = max_size_mb * 1024 * 1024
+
+        if size_bytes > max_size_bytes:
+            message = f"图像大小 ({size_mb:.2f}MB) 超过限制 ({max_size_mb}MB)"
+            return False, message
+
+        return True, f"图像大小验证通过 ({size_mb:.2f}MB)"
+
     @classmethod
     def get_available_models(cls):
         """从API动态获取可用模型列表，返回格式：[{\"pname\": \"...\", \"pid\": \"...\"}, ...]"""

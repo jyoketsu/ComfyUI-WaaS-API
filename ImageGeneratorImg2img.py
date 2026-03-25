@@ -139,6 +139,16 @@ class ImageGeneratorImg2img(BaseImageGenerator):
                             img_byte_arr = BytesIO()
                             pil_image.save(img_byte_arr, format="PNG")
                             img_byte_arr.seek(0)
+
+                            # 验证图像大小（不超过4MB）
+                            is_valid, size_message = self.validate_image_size(
+                                img_byte_arr, max_size_mb=10
+                            )
+
+                            if not is_valid:
+                                raise Exception(size_message)
+
+                            img_byte_arr.seek(0)
                             image_base64 = base64.b64encode(img_byte_arr.read()).decode(
                                 "utf-8"
                             )
@@ -156,6 +166,7 @@ class ImageGeneratorImg2img(BaseImageGenerator):
                         self.log(f"成功添加 image{idx} 的图像到请求中")
                     except Exception as img_error:
                         self.log(f"image{idx} 处理错误: {str(img_error)}")
+                        raise Exception(img_error)
 
             # 添加文本提示
             parts.append({"text": prompt})
