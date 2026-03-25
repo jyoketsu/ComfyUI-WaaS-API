@@ -233,13 +233,13 @@ class BaseImageGenerator:
 
     def build_api_payload(self, parts, aspect_ratio, image_size):
         """构造API请求体"""
-        ratio = self.get_aspect_ratio(aspect_ratio)
+        # ratio = self.get_aspect_ratio(aspect_ratio)
 
         payload = {
             "contents": [{"role": "user", "parts": parts}],
             "generationConfig": {
                 "responseModalities": ["TEXT", "IMAGE"],
-                "imageConfig": {"imageSize": image_size, "aspectRatio": ratio},
+                "imageConfig": {"imageSize": image_size, "aspectRatio": aspect_ratio},
             },
             "safetySettings": [
                 {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
