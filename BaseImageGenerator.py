@@ -267,7 +267,21 @@ class BaseImageGenerator:
             json=payload,
             timeout=120,
         )
-        res = response.json()
+
+        # 检查HTTP状态码
+        if response.status_code != 200:
+            error_msg = f"HTTP {response.status_code}: {response.text[:200]}"
+            raise Exception(f"API请求失败: {error_msg}")
+
+        # 检查响应是否为空
+        if not response.text:
+            raise Exception("API返回空响应")
+
+        try:
+            res = response.json()
+        except ValueError as e:
+            raise Exception(f"JSON解析失败: {str(e)}\n响应内容: {response.text[:200]}")
+
         if res.get("ok"):
             return response
         else:

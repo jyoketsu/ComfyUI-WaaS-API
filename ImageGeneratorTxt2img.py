@@ -61,10 +61,9 @@ class ImageGeneratorTxt2img(BaseImageGenerator):
                 self.log(error_message)
                 return self.get_error_response(error_message)
             # 从settings中提取API密钥
-            api_key_from_settings = (
+            actual_api_key = (
                 settings.get("apiKey", "") if isinstance(settings, dict) else ""
             )
-            actual_api_key = self.get_api_key(api_key_from_settings)
 
             if not actual_api_key:
                 error_message = (
