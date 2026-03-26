@@ -7,13 +7,15 @@ import requests
 from io import BytesIO
 import traceback
 import json
+from server import PromptServer
 
 
 class BaseImageGenerator:
     """图像生成器基类，包含所有共同的功能"""
 
     # 类级变量
-    api_host = "http://waas.k8s.dev.inner"
+    api_host = "http://10.97.50.67:5070"
+    # api_host = "http://waas.k8s.dev.inner/api"
     _models_cache = None  # 类级别缓存
     _models_map = {}  # pname -> pid 映射
 
@@ -24,7 +26,7 @@ class BaseImageGenerator:
         self.node_dir = os.path.dirname(os.path.abspath(__file__))
         self.key_file = os.path.join(self.node_dir, "gemini_api_key.txt")
         # API地址配置
-        self.api_base_url_template = f"{self.api_host}/api/generate/image/content"
+        self.api_base_url_template = f"{self.api_host}/generate/image/content"
 
         # 检查依赖库版本
         try:
@@ -86,7 +88,7 @@ class BaseImageGenerator:
 
         try:
             # 尝试从新API获取模型列表
-            api_url = f"{cls.api_host}/api/generate/image/types"
+            api_url = f"{cls.api_host}/generate/image/types"
             response = requests.get(api_url, timeout=5)
             if response.status_code == 200:
                 data = response.json()
@@ -265,7 +267,7 @@ class BaseImageGenerator:
             api_url,
             headers=headers,
             json=payload,
-            timeout=120,
+            timeout=300,
         )
 
         # 检查HTTP状态码
@@ -383,3 +385,14 @@ class BaseImageGenerator:
         if model_version:
             full_text += f"\n模型版本: {model_version}"
         return (img_tensor, full_text)
+
+    def get_job_id(self):
+        """从ComfyUI PromptServer获取当前job id"""
+        # 获取当前正在执行的 prompt_id
+        server = PromptServer.instance
+
+        # 方法1: 从当前执行队列获取
+        if hasattr(server, 'last_prompt_id'):
+            prompt_id = server.last_prompt_id
+
+        return prompt_id

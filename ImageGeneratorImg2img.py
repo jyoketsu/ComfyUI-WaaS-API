@@ -7,6 +7,7 @@ from io import BytesIO
 from .BaseImageGenerator import BaseImageGenerator
 
 
+
 class ImageGeneratorImg2img(BaseImageGenerator):
     @classmethod
     def INPUT_TYPES(cls):
@@ -101,6 +102,11 @@ class ImageGeneratorImg2img(BaseImageGenerator):
                 "Content-Type": "application/json",
                 "Authorization": actual_api_key,
             }
+
+            # 获取ComfyUI的job id并添加到headers
+            job_id = self.get_job_id()
+            if job_id:
+                headers['Job-ID'] = str(job_id)
 
             # 构造请求体
             parts = []

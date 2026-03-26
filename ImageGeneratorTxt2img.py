@@ -78,6 +78,11 @@ class ImageGeneratorTxt2img(BaseImageGenerator):
                 "Authorization": actual_api_key,
             }
 
+            # 获取ComfyUI的job id并添加到headers
+            job_id = self.get_job_id()
+            if job_id:
+                headers['Job-ID'] = str(job_id)
+
             # 构造请求体（仅包含文本提示）
             parts = [{"text": prompt}]
 
