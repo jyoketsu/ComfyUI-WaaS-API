@@ -94,6 +94,7 @@ class BaseImageGenerator:
             # 尝试从新API获取模型列表
             api_url = f"{cls.api_host}/image/types"
             response = requests.get(api_url, timeout=120)
+            print(f"获取模型列表响应: {response.status_code} {response.text}")
             if response.status_code == 200:
                 data = response.json()
                 # 处理新的API响应格式：{"code": 0, "data": [...], "ok": true}
