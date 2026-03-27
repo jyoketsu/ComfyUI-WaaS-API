@@ -15,7 +15,7 @@ class BaseImageGenerator:
 
     # 类级变量
     # 从环境变量获取api_host，如果未设置则使用默认值
-    api_host = os.getenv("WAAS_GENERATE_API", "http://10.97.50.67:5070")
+    api_host = os.getenv("WAAS_GENERATE_API")
     if not api_host:
         raise ValueError("未设置API环境变量！")
     # 可用的备选值：
@@ -93,7 +93,7 @@ class BaseImageGenerator:
         try:
             # 尝试从新API获取模型列表
             api_url = f"{cls.api_host}/image/types"
-            response = requests.get(api_url, timeout=5)
+            response = requests.get(api_url, timeout=120)
             if response.status_code == 200:
                 data = response.json()
                 # 处理新的API响应格式：{"code": 0, "data": [...], "ok": true}
