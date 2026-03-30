@@ -112,7 +112,7 @@ class BaseImageGenerator:
                     cls._models_cache = data
                     return data
         except Exception as e:
-            cls.log(f"获取模型列表失败: {e}")
+            print(f"获取模型列表失败: {e}")
 
         # 返回默认列表
         cls._models_cache = default_models

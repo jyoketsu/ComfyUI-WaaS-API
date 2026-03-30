@@ -230,10 +230,10 @@ class ImageGeneratorImg2img(BaseImageGenerator):
             if img_tensor is None:
                 if not response_text:
                     response_text = "API未返回任何图像或文本"
-                return self.generate_empty_image(512, 512)
+                return (self.generate_empty_image(512, 512),)
 
             # 返回成功响应
-            return img_tensor
+            return (img_tensor,)
 
         except Exception as e:
             error_message = f"处理过程中出错: {str(e)}"
