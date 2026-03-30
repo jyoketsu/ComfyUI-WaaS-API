@@ -7,7 +7,6 @@ from io import BytesIO
 from .BaseImageGenerator import BaseImageGenerator
 
 
-
 class ImageGeneratorImg2img(BaseImageGenerator):
     @classmethod
     def INPUT_TYPES(cls):
@@ -52,8 +51,8 @@ class ImageGeneratorImg2img(BaseImageGenerator):
             },
         }
 
-    RETURN_TYPES = ("IMAGE", "STRING")
-    RETURN_NAMES = ("image", "API Respond")
+    RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("image",)
     FUNCTION = "generate_image"
     CATEGORY = "☁️ 云扉AiGate"
 
@@ -76,15 +75,13 @@ class ImageGeneratorImg2img(BaseImageGenerator):
         image10=None,
     ):
         """生成图像 - 支持多张参考图片"""
-        # 重置日志消息
-        self.log_messages = []
 
         try:
             # 验证prompt不为空
             if not prompt or not prompt.strip():
                 error_message = "错误: Prompt不能为空，请输入描述文字"
-                self.log(error_message)
-                return self.get_error_response(error_message)
+                print(error_message)
+                raise Exception(error_message)
             # 从settings中提取API密钥
             actual_api_key = (
                 settings.get("apiKey", "") if isinstance(settings, dict) else ""
@@ -94,8 +91,8 @@ class ImageGeneratorImg2img(BaseImageGenerator):
                 error_message = (
                     "错误: 未提供有效的API密钥。请在节点中输入API密钥或确保已保存密钥。"
                 )
-                self.log(error_message)
-                return self.get_error_response(error_message)
+                print(error_message)
+                raise Exception(error_message)
 
             # 设置API请求头
             headers = {
@@ -106,7 +103,8 @@ class ImageGeneratorImg2img(BaseImageGenerator):
             # 获取ComfyUI的job id并添加到headers
             job_id = self.get_job_id()
             if job_id:
-                headers['Job-ID'] = str(job_id)
+                headers["Job-ID"] = str(job_id)
+                print(f"Job-ID: {job_id}")
 
             # 构造请求体
             parts = []
@@ -131,7 +129,7 @@ class ImageGeneratorImg2img(BaseImageGenerator):
                     try:
                         # 确定图像数量
                         batch_size = images.shape[0]
-                        self.log(f"检测到 image{idx} 有 {batch_size} 张图像")
+                        print(f"检测到 image{idx} 有 {batch_size} 张图像")
 
                         # 逐一处理每张图像
                         for i in range(batch_size):
@@ -142,7 +140,7 @@ class ImageGeneratorImg2img(BaseImageGenerator):
                             input_image = (input_image * 255).astype(np.uint8)
                             pil_image = Image.fromarray(input_image)
 
-                            self.log(
+                            print(
                                 f"参考图像 image{idx}[{i + 1}] 处理成功，尺寸: {pil_image.width}x{pil_image.height}"
                             )
 
@@ -174,9 +172,9 @@ class ImageGeneratorImg2img(BaseImageGenerator):
                                 }
                             )
 
-                        self.log(f"成功添加 image{idx} 的图像到请求中")
+                        print(f"成功添加 image{idx} 的图像到请求中")
                     except Exception as img_error:
-                        self.log(f"image{idx} 处理错误: {str(img_error)}")
+                        print(f"image{idx} 处理错误: {str(img_error)}")
                         raise Exception(img_error)
 
             # 添加文本提示
@@ -190,8 +188,8 @@ class ImageGeneratorImg2img(BaseImageGenerator):
 
             # 根据选择的模型构造API地址
             self.api_base_url = self.api_base_url_template.format(model=model_id)
-            self.log(f"使用模型: {model} (ID: {model_id})")
-            self.log(f"API地址: {self.api_base_url}")
+            print(f"使用模型: {model} (ID: {model_id})")
+            print(f"API地址: {self.api_base_url}")
 
             # 构造API URL（不需要在URL中添加key参数）
             api_url = f"{self.api_base_url}?code={model_id}"
@@ -204,19 +202,20 @@ class ImageGeneratorImg2img(BaseImageGenerator):
             # print(f"========================\n")
 
             # 调用API
+            print("正在调用API...")
             response = self.call_api(api_url, headers, payload)
 
             # 检查响应状态
             if response.status_code != 200:
                 error_msg = f"API请求失败，状态码: {response.status_code}, 响应: {response.text}"
-                self.log(error_msg)
-                return self.get_error_response(error_msg)
+                print(error_msg)
+                raise Exception(error_msg)
 
             # 解析响应
             response_data = response.json()
 
             # 响应处理
-            self.log("API响应接收成功，正在处理...")
+            print("API响应接收成功，正在处理...")
 
             # 处理响应
             img_tensor, response_text, model_version = self.process_response(
@@ -225,21 +224,18 @@ class ImageGeneratorImg2img(BaseImageGenerator):
 
             # 检查响应格式
             if response_text is None:
-                return self.get_error_response("API返回了空响应或格式错误")
+                raise Exception(error_message)
 
             # 如果没有找到图像，返回空图像和日志
             if img_tensor is None:
                 if not response_text:
                     response_text = "API未返回任何图像或文本"
-                return self.get_success_response(
-                    self.generate_empty_image(512, 512), response_text, model_version
-                )
+                return self.generate_empty_image(512, 512)
 
             # 返回成功响应
-            return self.get_success_response(img_tensor, response_text, model_version)
+            return img_tensor
 
         except Exception as e:
             error_message = f"处理过程中出错: {str(e)}"
-            self.log(f"图像生成错误: {str(e)}")
+            print(f"图像生成错误: {str(e)}")
             raise Exception(error_message)
-            # return self.get_error_response(error_message)
